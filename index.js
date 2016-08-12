@@ -13,14 +13,14 @@
  * namespace and the type of metric:
  *
  * ```
- * 	var myMetric = new cloudwatchMetrics.CloudWatchMetric('namespace', 'Count');
+ * 	var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
  * ```
  *
  * If we want to add our own default dimensions, such as environment information,
  * we can add it in the following manner:
  *
  * ```
- * var myMetric = new cloudwatchMetrics.CloudWatchMetric('namespace', 'Count', [{
+ * var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
  * 	Name: 'environment',
  * 	Value: 'PROD'
  * }]);
@@ -33,7 +33,7 @@
  * // isLocal is a boolean
  * var isLocal = someWayOfDetermingIfLocal();
  *
- * var myMetric = new cloudwatchMetrics.CloudWatchMetric('namespace', 'Count', [{
+ * var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
  * 	Name: 'environment',
  * 	Value: 'PROD'
  * }], {
@@ -55,9 +55,24 @@ var _ = require('underscore');
  * intialize sets the AWS SDK configuration to be the given configuration.
  * @param  {Object} config The AWS SDK configuration options one would like to set.
  */
-function initialize(config) {
+function setGlobalConfig(config) {
   AWS.config.update(config);
 }
+
+var _awsConfig = {region: 'us-east-1'};
+/**
+ * setIndividialConfig sets the default configuration to use when creating AWS
+ * metrics. It defaults to simply setting the AWS region to `us-east-1`, i.e.:
+ *
+ * {
+ * 	region: 'us-east-1'
+ * }
+ * @param {Object} config The AWS SDK configuration options one would like to set.
+ */
+function setIndividialConfig(config) {
+  _awsConfig = config;
+}
+
 
 const DEFAULT_METRIC_OPTIONS = {
   enabled: true
@@ -79,10 +94,8 @@ const DEFAULT_METRIC_OPTIONS = {
  *      publish the metric when `Metric#put()` is called - this is useful for
  *      turning off metrics in specific environments.
  */
-function CloudWatchMetric(namespace, units, defaultDimensions, options) {
-  // Use a separate AWS.CloudWatch object for each CloudWatchMetric. This will prevent internal
-  // race conditions with the AWS.CloudWatch implementation.
-  this.cloudwatch = new AWS.CloudWatch();
+function Metric(namespace, units, defaultDimensions, options) {
+  this.cloudwatch = new AWS.CloudWatch(_awsConfig);
   this.namespace = namespace;
   this.units = units;
   this.defaultDimensions = defaultDimensions || [];
@@ -97,28 +110,29 @@ function CloudWatchMetric(namespace, units, defaultDimensions, options) {
  * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
  * @param {function} done               Node style callback
  */
-CloudWatchMetric.prototype.put = (value, metricName, additionalDimensions, done) => {
-  var self = this;
-  additionalDimensions = additionalDimensions || [];
-  var params = {
-    MetricData: [{
-      MetricName: metricName,
-      Dimensions: self.defaultDimensions.concat(additionalDimensions),
-      Unit: self.units,
-      Value: value
-    }],
-    Namespace: self.namespace
-  };
-
+Metric.prototype.put = function(value, metricName, additionalDimensions, done) {
   // Only publish if we are enabled
-  if (self.options.enabled) {
-    self.cloudwatch.putMetricData(params, done);
+  var self = this;
+  if (!self.options.enabled) {
+    process.nextTick(done);
   } else {
-    done();
+    additionalDimensions = additionalDimensions || [];
+    var params = {
+      MetricData: [{
+        MetricName: metricName,
+        Dimensions: self.defaultDimensions.concat(additionalDimensions),
+        Unit: self.units,
+        Value: value
+      }],
+      Namespace: self.namespace
+    };
+
+    self.cloudwatch.putMetricData(params, done);
   }
 };
 
 module.exports = {
-  initialize,
-  CloudWatchMetric
+  setGlobalConfig,
+  setIndividialConfig,
+  Metric
 };

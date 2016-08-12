@@ -22,14 +22,14 @@ cloudwatchMetrics.initialize({
 For creating a metric, we simply need to provide the
 namespace and the type of metric:
 ```js
-var myMetric = new cloudwatchMetrics.CloudWatchMetric('namespace', 'Count');
+var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
 ```
 
 ### Metric creation - w/ default dimensions
 If we want to add our own default dimensions, such as environment information,
 we can add it in the following manner:
 ```js
-var myMetric = new cloudwatchMetrics.CloudWatchMetric('namespace', 'Count', [{
+var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 	Name: 'environment',
 	Value: 'PROD'
 }]);
@@ -42,7 +42,7 @@ we can make the metric in the following manner:
 // isLocal is a boolean
 var isLocal = someWayOfDetermingIfLocal();
 
-var myMetric = new cloudwatchMetrics.CloudWatchMetric('namespace', 'Count', [{
+var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 	Name: 'environment',
 	Value: 'PROD'
 }], {
