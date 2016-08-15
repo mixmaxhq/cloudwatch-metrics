@@ -51,14 +51,6 @@
 var AWS = require('aws-sdk');
 var _ = require('underscore');
 
-/**
- * intialize sets the AWS SDK configuration to be the given configuration.
- * @param  {Object} config The AWS SDK configuration options one would like to set.
- */
-function setGlobalConfig(config) {
-  AWS.config.update(config);
-}
-
 var _awsConfig = {region: 'us-east-1'};
 /**
  * setIndividialConfig sets the default configuration to use when creating AWS
@@ -69,7 +61,7 @@ var _awsConfig = {region: 'us-east-1'};
  * }
  * @param {Object} config The AWS SDK configuration options one would like to set.
  */
-function setIndividialConfig(config) {
+function initialize(config) {
   _awsConfig = config;
 }
 
@@ -132,7 +124,6 @@ Metric.prototype.put = function(value, metricName, additionalDimensions, done) {
 };
 
 module.exports = {
-  setGlobalConfig,
-  setIndividialConfig,
+  initialize,
   Metric
 };
