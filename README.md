@@ -89,5 +89,4 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 ```
 
 ## Release History
-0.0.2 Bulkifying sending metric data.
-0.0.1 Initial release.
+  0.0.1 Initial release.

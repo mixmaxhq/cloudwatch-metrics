@@ -120,15 +120,18 @@ const DEFAULT_METRIC_OPTIONS = {
  *      turning off metrics in specific environments.
  */
 function Metric(namespace, units, defaultDimensions, options) {
-  this.cloudwatch = new AWS.CloudWatch(_awsConfig);
-  this.namespace = namespace;
-  this.units = units;
-  this.defaultDimensions = defaultDimensions || [];
-  this.options = _.defaults(options || {}, DEFAULT_METRIC_OPTIONS);
-  this._storedMetrics = [];
+  var self = this;
+  self.cloudwatch = new AWS.CloudWatch(_awsConfig);
+  self.namespace = namespace;
+  self.units = units;
+  self.defaultDimensions = defaultDimensions || [];
+  self.options = _.defaults(options || {}, DEFAULT_METRIC_OPTIONS);
+  self._storedMetrics = [];
 
-  if (this.options.enabled) {
-    setInterval(this._sendMetrics, this.options.sendInterval);
+  if (self.options.enabled) {
+    setInterval(() => {
+      self._sendMetrics();
+    }, self.options.sendInterval);
   }
 }
 
