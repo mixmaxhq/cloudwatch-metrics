@@ -56,5 +56,38 @@ Then, whenever we want to publish a metric, we simply do:
 myMetric.put(value, metric, additionalDimensions, done);
 ```
 
+### NOTES
+Be aware that the `put` call does not actually send the metric to CloudWatch
+at that moment. Instead, it stores unsent metrics and sends them to
+CloudWatch on a predetermined interval (to help get around sending too many
+metrics at once - CloudWatch limits you by default to 150 put-metric data
+calls per second). The default interval is 5 seconds, if you want metrics
+sent at a different interva, then provide that option when construction your
+CloudWatch Metric:
+
+```js
+var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+	Name: 'environment',
+	Value: 'PROD'
+}], {
+	sendInterval: 3 * 1000 // It's specified in milliseconds.
+});
+```
+
+You can also register a callback to be called when we actually send metrics
+to CloudWatch - this can be useful for logging put-metric-data errors:
+```js
+var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+	Name: 'environment',
+	Value: 'PROD'
+}], {
+	sendCallback: (err) => {
+		if (!err) return;
+		// Do your error handling here.
+	}
+});
+```
+
 ## Release History
- 0.0.1 Initial release.
+0.0.2 Bulkifying sending metric data.
+0.0.1 Initial release.
