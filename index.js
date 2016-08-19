@@ -169,6 +169,8 @@ Metric.prototype._sendMetrics = function() {
   const dataPoints = self._storedMetrics;
   self._storedMetrics = [];
 
+  if (_.isEmpty(dataPoints)) return;
+
   self.cloudwatch.putMetricData({
     MetricData: dataPoints,
     Namespace: self.namespace
