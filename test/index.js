@@ -6,7 +6,12 @@ var cloudwatchMetric = require('..');
 var attachHook = (hook) => AWS.mock('CloudWatch', 'putMetricData', hook);
 
 describe('cloudwatch-metrics', function() {
+  afterEach(function() {
+    AWS.restore('CloudWatch', 'putMetricData');
+  });
+
   it('should buffer until timeout', function(done) {
+    this.timeout(5000);
     attachHook(function(data, cb) {
       expect(data).to.deep.equal({
         MetricData: [{
@@ -35,7 +40,6 @@ describe('cloudwatch-metrics', function() {
     });
 
     metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
-    AWS.restore('CloudWatch', 'putMetricData');
   });
 
   it('should buffer until the cap is hit', function(done) {
@@ -82,6 +86,5 @@ describe('cloudwatch-metrics', function() {
 
     metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
     metric.put(2, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
-    AWS.restore('CloudWatch', 'putMetricData');
   });
 });
