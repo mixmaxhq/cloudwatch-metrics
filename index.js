@@ -100,7 +100,8 @@ function initialize(config) {
 const DEFAULT_METRIC_OPTIONS = {
   enabled: true,
   sendInterval: 5000,
-  sendCallback: () => {}
+  sendCallback: () => {},
+  maxCapacity: 20
 };
 
 /**
@@ -129,7 +130,7 @@ function Metric(namespace, units, defaultDimensions, options) {
   self._storedMetrics = [];
 
   if (self.options.enabled) {
-    setInterval(() => {
+    self._interval = setInterval(() => {
       self._sendMetrics();
     }, self.options.sendInterval);
   }
@@ -153,6 +154,16 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
       Unit: self.units,
       Value: value
     });
+
+    // We need to see if we're at our maxCapacity, if we are - then send the
+    // metrics now.
+    if (self._storedMetrics.length === self.options.maxCapacity) {
+      clearInterval(self._interval);
+      self._sendMetrics();
+      self._interval = setInterval(() => {
+        self._sendMetrics();
+      }, self.options.sendInterval);
+    }
   }
 };
 

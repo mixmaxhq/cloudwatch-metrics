@@ -62,7 +62,7 @@ at that moment. Instead, it stores unsent metrics and sends them to
 CloudWatch on a predetermined interval (to help get around sending too many
 metrics at once - CloudWatch limits you by default to 150 put-metric data
 calls per second). The default interval is 5 seconds, if you want metrics
-sent at a different interva, then provide that option when construction your
+sent at a different interval, then provide that option when constructing your
 CloudWatch Metric:
 
 ```js
@@ -89,4 +89,4 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 ```
 
 ## Release History
-  0.0.1 Initial release.
+  1.0.0 Initial release.
