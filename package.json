@@ -4,7 +4,7 @@
   "description": "A simple wrapper for simplifying using Cloudwatch metrics",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -24,5 +24,10 @@
   "dependencies": {
     "aws-sdk": "^2.4.14",
     "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "aws-sdk-mock": "^1.5.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
   }
 }
