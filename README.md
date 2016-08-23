@@ -53,7 +53,7 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 ### Publishing metric data
 Then, whenever we want to publish a metric, we simply do:
 ```js
-myMetric.put(value, metric, additionalDimensions, done);
+myMetric.put(value, metric, additionalDimensions);
 ```
 
 ### NOTES
