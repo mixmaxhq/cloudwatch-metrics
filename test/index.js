@@ -1,5 +1,6 @@
 var expect = require('chai').expect;
 var AWS = require('aws-sdk-mock');
+var _ = require('underscore');
 
 var cloudwatchMetric = require('..');
 
@@ -40,6 +41,43 @@ describe('cloudwatch-metrics', function() {
     });
 
     metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
+  });
+
+  it('should call continually', function(done) {
+    this.timeout(3000);
+    attachHook(function(data, cb) {
+      expect(data).to.deep.equal({
+        MetricData: [{
+          Dimensions: [{
+            Name: "environment",
+            Value: "PROD"
+          }, {
+            Name: "ExtraDimension",
+            Value: "Value"
+          }],
+          MetricName: "metricName",
+          Unit: "Count",
+          Value: 1
+        }],
+        Namespace: 'namespace'
+      });
+      cb();
+    });
+
+    var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      Name: 'environment',
+      Value: 'PROD'
+    }], {
+      sendInterval: 500,
+      sendCallback: _.after(3, done)
+    });
+
+    var interval;
+    var stop = _.after(3, () => clearInterval(interval));
+    interval = setInterval(function() {
+      metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
+      stop();
+    }, 400);
   });
 
   it('should buffer until the cap is hit', function(done) {
