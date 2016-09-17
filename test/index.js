@@ -1,14 +1,25 @@
 var expect = require('chai').expect;
-var AWS = require('aws-sdk-mock');
 var _ = require('underscore');
 
-var cloudwatchMetric = require('..');
-
-var attachHook = (hook) => AWS.mock('CloudWatch', 'putMetricData', hook);
+var rewire = require('rewire');
+var cloudwatchMetric = rewire('..');
 
 describe('cloudwatch-metrics', function() {
+  var restoreAWS;
+
+  function attachHook(hook) {
+    restoreAWS = cloudwatchMetric.__set__('AWS', {
+      CloudWatch: function() {
+        this.putMetricData = hook;
+      }
+    });
+  }
+
   afterEach(function() {
-    AWS.restore('CloudWatch', 'putMetricData');
+    if (restoreAWS) {
+      restoreAWS();
+      restoreAWS = null;
+    }
   });
 
   it('should buffer until timeout', function(done) {

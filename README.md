@@ -10,7 +10,12 @@ $ npm install cloudwatch-metrics --save
 ## Usage
 
 ### Initialization
-We should always initialize our environment first:
+
+By default, the library will log metrics to the `us-east-1` region and read
+AWS credentials from the AWS SDK's [default environment variables](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html#Credentials_from_Environment_Variables).
+
+If you want to change these values, you can call `initialize`:
+
 ```js
 var cloudwatchMetrics = require('cloudwatch-metrics');
 cloudwatchMetrics.initialize({
