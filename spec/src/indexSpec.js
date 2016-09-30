@@ -3,7 +3,7 @@
 var _ = require('underscore');
 
 var rewire = require('rewire');
-var cloudwatchMetric = rewire('..');
+var cloudwatchMetric = rewire('../..');
 
 describe('cloudwatch-metrics', function() {
   var restoreAWS;
