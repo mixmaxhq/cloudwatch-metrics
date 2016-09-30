@@ -94,4 +94,5 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 ```
 
 ## Release History
+  1.1.0 Add `metric.sample()`
   1.0.0 Initial release.
