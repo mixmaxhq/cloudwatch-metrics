@@ -168,6 +168,22 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
 };
 
 /**
+ * Samples a metric so that we send the metric to Cloudwatch at the given
+ * sampleRate.
+ * @param {Integer|Long} value          Data point to submit
+ * @param {String} namespace            Name of the metric
+ * @param {Array} additionalDimensions  Array of additional CloudWatch metric dimensions. See
+ * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
+ * @param  {Float} sampleRate           The rate at which to sample the metric at.
+ *    The sample rate must be between 0.0 an 1.0. As an example, if you provide
+ *    a sampleRate of 0.1, then we will send the metric to Cloudwatch 10% of the
+ *    time.
+ */
+Metric.prototype.sample = function(value, metricName, additionalDimensions, sampleRate) {
+  if (Math.random() < sampleRate) this.put(value, metricName, additionalDimensions);
+};
+
+/**
  * _sendMetrics is called on a specified interval (defaults to 5 seconds but
  * can be overridden but providing a `sendInterval` option when creating a
  * Metric). It is what actually sends metrics to CloudWatch. It passes the
