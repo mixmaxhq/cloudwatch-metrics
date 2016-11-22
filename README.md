@@ -55,6 +55,15 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 });
 ```
 
+The full list of configuration options is:
+
+Option | Purpose
+------ | -------
+enabled | Whether or not we should send the metric to CloudWatch (useful for dev vs prod environments).
+sendInterval | The interval in milliseconds at which we send any buffered metrics, defaults to 5000 milliseconds.
+sendCallback | A callback to be called when we send metric data to CloudWatch (useful for logging any errors in sending data).
+maxCapacity | A maximum number of events to buffer before we send immediately (before the sendInterval is reached).
+
 ### Publishing metric data
 Then, whenever we want to publish a metric, we simply do:
 ```js
