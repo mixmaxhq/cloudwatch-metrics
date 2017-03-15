@@ -52,7 +52,7 @@
  * CloudWatch on a predetermined interval (to help get around sending too many
  * metrics at once - CloudWatch limits you by default to 150 put-metric data
  * calls per second). The default interval is 5 seconds, if you want metrics
- * sent at a different interva, then provide that option when construction your
+ * sent at a different interval, then provide that option when construction your
  * CloudWatch Metric:
  *
  * ```
