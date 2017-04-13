@@ -103,7 +103,35 @@ const DEFAULT_METRIC_OPTIONS = {
   sendCallback: () => {},
   maxCapacity: 20
 };
-
+const UNITS = {
+    "SECONDS" : "Seconds",
+    "MICROSECONDS" : "Microseconds",
+    "MILLISECONDS" : "Milliseconds",
+    "BYTES" : "Bytes",
+    "KILOBYTES" : "Kilobytes",
+    "MEGABYTES": "Megabytes" ,
+    "GIGABYTES" : "Gigabytes",
+    "TERABYTES" : "Terabytes",
+    "BITS" : "Bits",
+    "KILOBITS" : "Kilobits",
+    "MEGABITS" : "Megabits",
+    "GIGABITS" : "Gigabits",
+    "TERABITS" : "Terabits",
+    "PERCENT" : "Percent",
+    "COUNT" : "Count",
+    "BYTESSECOND" : "Bytes/Second",
+    "KILOBYTESSECOND" : "Kilobytes/Second",
+    "MEGABYTESSECOND" : "Megabytes/Second",
+    "GIGABYTESSECOND" : "Gigabytes/Second",
+    "TERABYTESSECOND" : "Terabytes/Second",
+    "BITSSECOND" : "Bits/Second",
+    "KILOBITSSECOND" : "Kilobits/Second",
+    "MEGABITSSECOND" : "Megabits/Second",
+    "GIGABITSSECOND" : "Gigabits/Second",
+    "TERABITSSECOND" : "Terabits/Second",
+    "COUNTSECOND" : "Count/Second",
+    "NONE": "None"
+};
 /**
  * Create a custom CloudWatch Metric object that sets pre-configured dimensions and allows for
  * customized metricName and units. Each CloudWatchMetric object has it's own internal
@@ -130,6 +158,9 @@ function Metric(namespace, units, defaultDimensions, options) {
   self._storedMetrics = [];
 
   if (self.options.enabled) {
+        if(!Object.keys(UNITS).find(u=>UNITS[u]===units)) {
+        throw 'cloudwatch-metrics: Unrecognised unit';
+    }
     self._interval = setInterval(() => {
       self._sendMetrics();
     }, self.options.sendInterval);
@@ -206,5 +237,6 @@ Metric.prototype._sendMetrics = function() {
 
 module.exports = {
   initialize,
-  Metric
+  Metric,
+  UNITS
 };
