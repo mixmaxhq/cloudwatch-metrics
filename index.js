@@ -103,6 +103,7 @@ const DEFAULT_METRIC_OPTIONS = {
   sendCallback: () => {},
   maxCapacity: 20
 };
+//see http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDatum.html
 const UNITS = {
     "SECONDS" : "Seconds",
     "MICROSECONDS" : "Microseconds",
@@ -158,8 +159,9 @@ function Metric(namespace, units, defaultDimensions, options) {
   self._storedMetrics = [];
 
   if (self.options.enabled) {
-        if(!Object.keys(UNITS).find(u=>UNITS[u]===units)) {
-        throw 'cloudwatch-metrics: Unrecognised unit';
+    const UNIT_VALS = _.values(UNITS);
+    if(!_.contains(UNIT_VALS, units)) {
+      throw 'cloudwatch-metrics: Unrecognized unit';
     }
     self._interval = setInterval(() => {
       self._sendMetrics();
