@@ -137,7 +137,21 @@ describe('cloudwatch-metrics', function() {
       metric.put(2, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
     });
   });
-
+  describe('unit checking', function() {
+    it('should error for unknown units', function () {
+      var error = false;
+      try {
+        var metric = new cloudwatchMetric.Metric('namespace', 'UnknownUnit', [{
+          Name: 'environment',
+          Value: 'PROD'
+        }]);
+        metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
+      }catch(e){
+        error = true;
+      }
+      expect(error).toBe(true);
+    });
+  });
   describe('sample', function() {
     it('should ignore metrics when not in the sample range', function() {
       var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
