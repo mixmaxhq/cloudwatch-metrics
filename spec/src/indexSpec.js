@@ -29,14 +29,14 @@ describe('cloudwatch-metrics', function() {
         expect(data).toEqual({
           MetricData: [{
             Dimensions: [{
-              Name: "environment",
-              Value: "PROD"
+              Name: 'environment',
+              Value: 'PROD'
             }, {
-              Name: "ExtraDimension",
-              Value: "Value"
+              Name: 'ExtraDimension',
+              Value: 'Value'
             }],
-            MetricName: "metricName",
-            Unit: "Count",
+            MetricName: 'metricName',
+            Unit: 'Count',
             Value: 1
           }],
           Namespace: 'namespace'
@@ -60,14 +60,14 @@ describe('cloudwatch-metrics', function() {
         expect(data).toEqual({
           MetricData: [{
             Dimensions: [{
-              Name: "environment",
-              Value: "PROD"
+              Name: 'environment',
+              Value: 'PROD'
             }, {
-              Name: "ExtraDimension",
-              Value: "Value"
+              Name: 'ExtraDimension',
+              Value: 'Value'
             }],
-            MetricName: "metricName",
-            Unit: "Count",
+            MetricName: 'metricName',
+            Unit: 'Count',
             Value: 1
           }],
           Namespace: 'namespace'
@@ -96,25 +96,25 @@ describe('cloudwatch-metrics', function() {
         expect(data).toEqual({
           MetricData: [{
             Dimensions: [{
-              Name: "environment",
-              Value: "PROD"
+              Name: 'environment',
+              Value: 'PROD'
             }, {
-              Name: "ExtraDimension",
-              Value: "Value"
+              Name: 'ExtraDimension',
+              Value: 'Value'
             }],
-            MetricName: "metricName",
-            Unit: "Count",
+            MetricName: 'metricName',
+            Unit: 'Count',
             Value: 1
           }, {
             Dimensions: [{
-              Name: "environment",
-              Value: "PROD"
+              Name: 'environment',
+              Value: 'PROD'
             }, {
-              Name: "ExtraDimension",
-              Value: "Value"
+              Name: 'ExtraDimension',
+              Value: 'Value'
             }],
-            MetricName: "metricName",
-            Unit: "Count",
+            MetricName: 'metricName',
+            Unit: 'Count',
             Value: 2
           }],
           Namespace: 'namespace'
@@ -127,8 +127,8 @@ describe('cloudwatch-metrics', function() {
         Value: 'PROD'
       }], {
         sendInterval: 3000, // mocha defaults to a 2 second timeout so setting
-                            // larger than that will cause the test to fail if we
-                            // hit the timeout
+        // larger than that will cause the test to fail if we
+        // hit the timeout
         sendCallback: done,
         maxCapacity: 2
       });
