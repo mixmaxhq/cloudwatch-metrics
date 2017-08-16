@@ -80,7 +80,6 @@
  */
 
 var AWS = require('aws-sdk');
-var _ = require('underscore');
 
 var _awsConfig = {region: 'us-east-1'};
 /**
@@ -126,7 +125,7 @@ function Metric(namespace, units, defaultDimensions, options) {
   self.namespace = namespace;
   self.units = units;
   self.defaultDimensions = defaultDimensions || [];
-  self.options = _.defaults(options || {}, DEFAULT_METRIC_OPTIONS);
+  self.options = Object.assign({}, DEFAULT_METRIC_OPTIONS, options);
   self._storedMetrics = [];
 
   if (self.options.enabled) {
@@ -196,7 +195,7 @@ Metric.prototype._sendMetrics = function() {
   const dataPoints = self._storedMetrics;
   self._storedMetrics = [];
 
-  if (_.isEmpty(dataPoints)) return;
+  if (!dataPoints || !dataPoints.length) return;
 
   self.cloudwatch.putMetricData({
     MetricData: dataPoints,
