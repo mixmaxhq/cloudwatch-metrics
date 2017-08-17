@@ -23,15 +23,15 @@
   },
   "homepage": "https://github.com/mixmaxhq/cloudwatch-metrics#readme",
   "dependencies": {
-    "aws-sdk": "^2.4.14",
-    "underscore": "^1.8.3"
+    "aws-sdk": "^2.4.14"
   },
   "devDependencies": {
     "eslint": ">=3",
     "eslint-config-mixmax": "^0.6.0",
     "jasmine": "^2.5.2",
     "pre-commit": "^1.2.2",
-    "rewire": "^2.5.2"
+    "rewire": "^2.5.2",
+    "underscore": "^1.8.3"
   },
   "pre-commit": [
     "lint"
