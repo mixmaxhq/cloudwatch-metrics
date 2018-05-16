@@ -4,7 +4,7 @@ CloudWatch metrics.
 
 ## Install
 ```
-$ yarn add cloudwatch-metrics
+$ npm install cloudwatch-metrics
 ```
 or
 ```
