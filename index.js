@@ -203,6 +203,21 @@ Metric.prototype._sendMetrics = function() {
   }, self.options.sendCallback);
 };
 
+/**
+ * Shuts down metric service by clearing any outstanding timer and sending any existing metrics
+ */
+Metric.prototype.shutdown = function() {
+  clearInterval(this._interval);
+  this._sendMetrics();
+};
+
+/**
+ * Gets whether outstanding metrics exist or not
+ */
+Metric.prototype.hasMetrics = function() {
+  return !!this._storedMetrics.length;
+};
+
 module.exports = {
   initialize,
   Metric
