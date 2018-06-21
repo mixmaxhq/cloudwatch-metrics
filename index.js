@@ -150,6 +150,7 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
     self._storedMetrics.push({
       MetricName: metricName,
       Dimensions: self.defaultDimensions.concat(additionalDimensions),
+      Timestamp: Date.now(),
       Unit: self.units,
       Value: value
     });

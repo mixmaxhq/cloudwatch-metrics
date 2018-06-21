@@ -1,4 +1,4 @@
-/* globals describe, afterEach, it, expect, spyOn */
+/* globals describe, afterEach, it, expect, spyOn, jasmine */
 
 var _ = require('underscore');
 
@@ -36,6 +36,7 @@ describe('cloudwatch-metrics', function() {
               Value: 'Value'
             }],
             MetricName: 'metricName',
+            Timestamp: jasmine.any(Number),
             Unit: 'Count',
             Value: 1
           }],
@@ -67,6 +68,7 @@ describe('cloudwatch-metrics', function() {
               Value: 'Value'
             }],
             MetricName: 'metricName',
+            Timestamp: jasmine.any(Number),
             Unit: 'Count',
             Value: 1
           }],
@@ -103,6 +105,7 @@ describe('cloudwatch-metrics', function() {
               Value: 'Value'
             }],
             MetricName: 'metricName',
+            Timestamp: jasmine.any(Number),
             Unit: 'Count',
             Value: 1
           }, {
@@ -114,6 +117,7 @@ describe('cloudwatch-metrics', function() {
               Value: 'Value'
             }],
             MetricName: 'metricName',
+            Timestamp: jasmine.any(Number),
             Unit: 'Count',
             Value: 2
           }],
