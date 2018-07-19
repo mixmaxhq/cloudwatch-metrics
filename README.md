@@ -74,6 +74,36 @@ Then, whenever we want to publish a metric, we simply do:
 myMetric.put(value, metric, additionalDimensions);
 ```
 
+### Using summary metrics
+
+Instead of sending individual data points for your metric, you may want to send
+summary metrics. Summary metrics track statistics over time, and send those
+statistics to CloudWatch on a configurable interval. For instance, you might
+want to know your total network throughput, but you don't care about individual
+request size percentiles. You could use `summaryPut` to track this data and send
+it to CloudWatch with fewer requests:
+
+```js
+var metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
+
+function onRequest(req) {
+	// This will still track maximum, minimum, sum, count, and average, but won't
+	// take up lots of CloudWatch requests doing so.
+	metric.summaryPut(req.size, 'requestSize');
+}
+```
+
+Note that metrics use different summaries for different dimensions, _and that
+the order of the dimensions is significant!_ In other words, these track
+different metric sets:
+
+```js
+var metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
+// Different statistic sets!
+metric.summaryPut(45, 'requestSize', [{Name: 'Region', Value: 'US'}, {Name: 'Server', Value: 'Card'}]);
+metric.summaryPut(894, 'requestSize', [{Name: 'Server', Value: 'Card'}, {Name: 'Region', Value: 'US'}]);
+```
+
 ### NOTES
 Be aware that the `put` call does not actually send the metric to CloudWatch
 at that moment. Instead, it stores unsent metrics and sends them to
