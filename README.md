@@ -137,5 +137,7 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 ```
 
 ## Release History
-  1.1.0 Add `metric.sample()`
-  1.0.0 Initial release.
+
+* 1.2.0 Add the ability to use summary metrics.
+* 1.1.0 Add `metric.sample()`
+* 1.0.0 Initial release.
