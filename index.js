@@ -79,10 +79,10 @@
  * ```
  */
 
-var AWS = require('aws-sdk');
+let AWS = require('aws-sdk');
 const SummarySet = require('./src/summarySet');
 
-var _awsConfig = {region: 'us-east-1'};
+let _awsConfig = {region: 'us-east-1'};
 /**
  * setIndividialConfig sets the default configuration to use when creating AWS
  * metrics. It defaults to simply setting the AWS region to `us-east-1`, i.e.:
@@ -122,19 +122,19 @@ const DEFAULT_METRIC_OPTIONS = {
  *      turning off metrics in specific environments.
  */
 function Metric(namespace, units, defaultDimensions, options) {
-  var self = this;
-  self.cloudwatch = new AWS.CloudWatch(_awsConfig);
-  self.namespace = namespace;
-  self.units = units;
-  self.defaultDimensions = defaultDimensions || [];
-  self.options = Object.assign({}, DEFAULT_METRIC_OPTIONS, options);
-  self._storedMetrics = [];
+  this.cloudwatch = new AWS.CloudWatch(_awsConfig);
+  this.namespace = namespace;
+  this.units = units;
+  this.defaultDimensions = defaultDimensions || [];
+  this.options = Object.assign({}, DEFAULT_METRIC_OPTIONS, options);
+  this.options.maxCapacity = Math.min(DEFAULT_METRIC_OPTIONS.maxCapacity, this.options.maxCapacity);
+  this._storedMetrics = [];
   this._summaryData = new Map();
 
-  if (self.options.enabled) {
-    self._interval = setInterval(() => {
-      self._sendMetrics();
-    }, self.options.sendInterval);
+  if (this.options.enabled) {
+    this._interval = setInterval(() => {
+      this._sendMetrics();
+    }, this.options.sendInterval);
 
     this._summaryInterval = setInterval(() => {
       this._summarizeMetrics();
@@ -150,25 +150,24 @@ function Metric(namespace, units, defaultDimensions, options) {
  * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
  */
 Metric.prototype.put = function(value, metricName, additionalDimensions) {
-  var self = this;
   // Only publish if we are enabled
-  if (self.options.enabled) {
+  if (this.options.enabled) {
     additionalDimensions = additionalDimensions || [];
-    self._storedMetrics.push({
+    this._storedMetrics.push({
       MetricName: metricName,
-      Dimensions: self.defaultDimensions.concat(additionalDimensions),
-      Unit: self.units,
+      Dimensions: this.defaultDimensions.concat(additionalDimensions),
+      Unit: this.units,
       Value: value
     });
 
     // We need to see if we're at our maxCapacity, if we are - then send the
     // metrics now.
-    if (self._storedMetrics.length === self.options.maxCapacity) {
-      clearInterval(self._interval);
-      self._sendMetrics();
-      self._interval = setInterval(() => {
-        self._sendMetrics();
-      }, self.options.sendInterval);
+    if (this._storedMetrics.length === this.options.maxCapacity) {
+      clearInterval(this._interval);
+      this._sendMetrics();
+      this._interval = setInterval(() => {
+        this._sendMetrics();
+      }, this.options.sendInterval);
     }
   }
 };
@@ -221,17 +220,16 @@ Metric.prototype.sample = function(value, metricName, additionalDimensions, samp
  * call. This can be useful for logging AWS errors.
  */
 Metric.prototype._sendMetrics = function() {
-  var self = this;
   // NOTE: this would be racy except that NodeJS is single threaded.
-  const dataPoints = self._storedMetrics;
-  self._storedMetrics = [];
+  const dataPoints = this._storedMetrics;
+  this._storedMetrics = [];
 
   if (!dataPoints || !dataPoints.length) return;
 
-  self.cloudwatch.putMetricData({
+  this.cloudwatch.putMetricData({
     MetricData: dataPoints,
-    Namespace: self.namespace
-  }, self.options.sendCallback);
+    Namespace: this.namespace
+  }, this.options.sendCallback);
 };
 
 /**
