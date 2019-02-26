@@ -21,7 +21,7 @@ AWS credentials from the AWS SDK's [default environment variables](http://docs.a
 If you want to change these values, you can call `initialize`:
 
 ```js
-var cloudwatchMetrics = require('cloudwatch-metrics');
+const cloudwatchMetrics = require('cloudwatch-metrics');
 cloudwatchMetrics.initialize({
 	region: 'us-east-1'
 });
@@ -31,14 +31,14 @@ cloudwatchMetrics.initialize({
 For creating a metric, we simply need to provide the
 namespace and the type of metric:
 ```js
-var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
+const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
 ```
 
 ### Metric creation - w/ default dimensions
 If we want to add our own default dimensions, such as environment information,
 we can add it in the following manner:
 ```js
-var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 	Name: 'environment',
 	Value: 'PROD'
 }]);
@@ -49,9 +49,9 @@ If we want to disable a metric in certain environments (such as local developmen
 we can make the metric in the following manner:
 ```js
 // isLocal is a boolean
-var isLocal = someWayOfDetermingIfLocal();
+const isLocal = someWayOfDetermingIfLocal();
 
-var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 	Name: 'environment',
 	Value: 'PROD'
 }], {
@@ -66,7 +66,7 @@ Option | Purpose
 enabled | Whether or not we should send the metric to CloudWatch (useful for dev vs prod environments).
 sendInterval | The interval in milliseconds at which we send any buffered metrics, defaults to 5000 milliseconds.
 sendCallback | A callback to be called when we send metric data to CloudWatch (useful for logging any errors in sending data).
-maxCapacity | A maximum number of events to buffer before we send immediately (before the sendInterval is reached).
+maxCapacity | A maximum number of events to buffer before we send immediately (before the sendInterval is reached). AWS has a hard limit of 20 per Request. Above that it will reject your metrics and they will be lost.
 
 ### Publishing metric data
 Then, whenever we want to publish a metric, we simply do:
@@ -84,7 +84,7 @@ request size percentiles. You could use `summaryPut` to track this data and send
 it to CloudWatch with fewer requests:
 
 ```js
-var metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
+const metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
 
 function onRequest(req) {
 	// This will still track maximum, minimum, sum, count, and average, but won't
@@ -98,7 +98,7 @@ the order of the dimensions is significant!_ In other words, these track
 different metric sets:
 
 ```js
-var metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
+const metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
 // Different statistic sets!
 metric.summaryPut(45, 'requestSize', [{Name: 'Region', Value: 'US'}, {Name: 'Server', Value: 'Card'}]);
 metric.summaryPut(894, 'requestSize', [{Name: 'Server', Value: 'Card'}, {Name: 'Region', Value: 'US'}]);
@@ -114,7 +114,7 @@ sent at a different interval, then provide that option when constructing your
 CloudWatch Metric:
 
 ```js
-var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 	Name: 'environment',
 	Value: 'PROD'
 }], {
@@ -125,7 +125,7 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 You can also register a callback to be called when we actually send metrics
 to CloudWatch - this can be useful for logging put-metric-data errors:
 ```js
-var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 	Name: 'environment',
 	Value: 'PROD'
 }], {
