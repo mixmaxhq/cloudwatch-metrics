@@ -9,10 +9,8 @@ describe('cloudwatch-metrics', function() {
   var restoreAWS;
 
   function attachHook(hook) {
-    restoreAWS = cloudwatchMetric.__set__('AWS', {
-      CloudWatch: function() {
-        this.putMetricData = hook;
-      }
+    restoreAWS = cloudwatchMetric.__set__('CloudWatch', function() {
+      this.putMetricData = hook;
     });
   }
 
