@@ -155,6 +155,7 @@ describe('cloudwatch-metrics', function() {
           }],
           Namespace: 'namespace'
         });
+        expect(data.MetricData[0].Timestamp).toBeLessThan(Date.now());
         cb();
       });
 
@@ -169,7 +170,7 @@ describe('cloudwatch-metrics', function() {
         sendCallback: done,
       });
 
-      metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
+      metric.put(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
     });
   });
 

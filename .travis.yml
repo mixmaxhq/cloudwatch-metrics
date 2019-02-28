@@ -8,7 +8,7 @@ sudo: false
 
 script:
   - npm run lint
-  - npm run test
+  - npm test
 
 # Don't build pushes to branches other than our deploy branches. (This doesn't
 # affect PR builds, which are separate from branch builds in Travis. If we
