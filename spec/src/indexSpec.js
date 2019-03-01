@@ -150,12 +150,12 @@ describe('cloudwatch-metrics', function() {
             }],
             MetricName: 'metricName',
             Unit: 'Count',
-            Timestamp: jasmine.any(Number),
+            Timestamp: jasmine.any(String),
             Value: 1
           }],
           Namespace: 'namespace'
         });
-        expect(data.MetricData[0].Timestamp).toBeLessThan(Date.now());
+        expect(Date.parse(data.MetricData[0].Timestamp)).toBeLessThan(Date.now());
         cb();
       });
 

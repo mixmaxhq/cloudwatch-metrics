@@ -161,7 +161,7 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
       Value: value
     };
     if (this.options.withTimestamp) {
-      payload.Timestamp = Date.now();
+      payload.Timestamp = new Date().toISOString();
     }
 
     self._storedMetrics.push(payload);
