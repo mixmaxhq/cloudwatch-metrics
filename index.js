@@ -101,7 +101,8 @@ const DEFAULT_METRIC_OPTIONS = {
   sendInterval: 5000,
   summaryInterval: 10000,
   sendCallback: () => {},
-  maxCapacity: 20
+  maxCapacity: 20,
+  withTimestamp: false
 };
 
 /**
@@ -153,12 +154,17 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
   // Only publish if we are enabled
   if (self.options.enabled) {
     additionalDimensions = additionalDimensions || [];
-    self._storedMetrics.push({
+    var payload = {
       MetricName: metricName,
       Dimensions: self.defaultDimensions.concat(additionalDimensions),
       Unit: self.units,
       Value: value
-    });
+    };
+    if (this.options.withTimestamp) {
+      payload.Timestamp = new Date().toISOString();
+    }
+
+    self._storedMetrics.push(payload);
 
     // We need to see if we're at our maxCapacity, if we are - then send the
     // metrics now.
