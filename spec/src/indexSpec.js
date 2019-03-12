@@ -155,7 +155,7 @@ describe('cloudwatch-metrics', function() {
           }],
           Namespace: 'namespace'
         });
-        expect(Date.parse(data.MetricData[0].Timestamp)).toBeLessThan(Date.now());
+        expect(Date.parse(data.MetricData[0].Timestamp)).toBeLessThanOrEqual(Date.now());
         cb();
       });
 
