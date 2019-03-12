@@ -79,7 +79,7 @@
  * ```
  */
 
-var AWS = require('aws-sdk');
+var CloudWatch = require('aws-sdk/clients/cloudwatch');
 const SummarySet = require('./src/summarySet');
 
 var _awsConfig = {region: 'us-east-1'};
@@ -95,7 +95,6 @@ var _awsConfig = {region: 'us-east-1'};
 function initialize(config) {
   _awsConfig = config;
 }
-
 
 const DEFAULT_METRIC_OPTIONS = {
   enabled: true,
@@ -123,7 +122,7 @@ const DEFAULT_METRIC_OPTIONS = {
  */
 function Metric(namespace, units, defaultDimensions, options) {
   var self = this;
-  self.cloudwatch = new AWS.CloudWatch(_awsConfig);
+  self.cloudwatch = new CloudWatch(_awsConfig);
   self.namespace = namespace;
   self.units = units;
   self.defaultDimensions = defaultDimensions || [];

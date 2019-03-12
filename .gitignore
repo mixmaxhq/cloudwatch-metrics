@@ -26,6 +26,7 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+*.lock
 
 .DS_Store
 spec/browser/spec.bundle.js
