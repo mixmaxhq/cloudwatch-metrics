@@ -244,6 +244,23 @@ Metric.prototype._sendMetrics = function() {
 };
 
 /**
+ * Shuts down metric service by clearing any outstanding timer and sending any existing metrics
+ */
+Metric.prototype.shutdown = function() {
+  clearInterval(this._interval);
+  this._sendMetrics();
+};
+
+/**
+ * Gets whether outstanding metrics exist or not.
+ *
+ * @return {boolean}
+ */
+Metric.prototype.hasMetrics = function() {
+  return !!this._storedMetrics.length;
+};
+
+/**
  * _summarizeMetrics is called on a specified interval (default, 10 seconds). It
  * sends summarized statistics to Cloudwatch.
  */
