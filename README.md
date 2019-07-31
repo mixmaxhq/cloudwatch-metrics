@@ -67,11 +67,43 @@ enabled | Whether or not we should send the metric to CloudWatch (useful for dev
 sendInterval | The interval in milliseconds at which we send any buffered metrics, defaults to 5000 milliseconds.
 sendCallback | A callback to be called when we send metric data to CloudWatch (useful for logging any errors in sending data).
 maxCapacity | A maximum number of events to buffer before we send immediately (before the sendInterval is reached).
+withTimestamp | Include the timestamp with the metric value.
+storageResolution | The metric storage resolution to use in seconds. Set to 1 for high resolution metrics. See (https://aws.amazon.com/blogs/aws/new-high-resolution-custom-metrics-and-alarms-for-amazon-cloudwatch/)
 
 ### Publishing metric data
 Then, whenever we want to publish a metric, we simply do:
 ```js
 myMetric.put(value, metric, additionalDimensions);
+```
+
+### Using summary metrics
+
+Instead of sending individual data points for your metric, you may want to send
+summary metrics. Summary metrics track statistics over time, and send those
+statistics to CloudWatch on a configurable interval. For instance, you might
+want to know your total network throughput, but you don't care about individual
+request size percentiles. You could use `summaryPut` to track this data and send
+it to CloudWatch with fewer requests:
+
+```js
+var metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
+
+function onRequest(req) {
+	// This will still track maximum, minimum, sum, count, and average, but won't
+	// take up lots of CloudWatch requests doing so.
+	metric.summaryPut(req.size, 'requestSize');
+}
+```
+
+Note that metrics use different summaries for different dimensions, _and that
+the order of the dimensions is significant!_ In other words, these track
+different metric sets:
+
+```js
+var metric = new cloudwatchMetrics.Metric('namespace', 'Bytes');
+// Different statistic sets!
+metric.summaryPut(45, 'requestSize', [{Name: 'Region', Value: 'US'}, {Name: 'Server', Value: 'Card'}]);
+metric.summaryPut(894, 'requestSize', [{Name: 'Server', Value: 'Card'}, {Name: 'Region', Value: 'US'}]);
 ```
 
 ### NOTES
@@ -107,5 +139,7 @@ var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
 ```
 
 ## Release History
-  1.1.0 Add `metric.sample()`
-  1.0.0 Initial release.
+
+* 1.2.0 Add the ability to use summary metrics.
+* 1.1.0 Add `metric.sample()`
+* 1.0.0 Initial release.

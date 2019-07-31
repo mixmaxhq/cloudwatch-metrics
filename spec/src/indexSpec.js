@@ -1,4 +1,4 @@
-/* globals describe, afterEach, it, expect, spyOn */
+/* globals describe, afterEach, it, expect, spyOn, jasmine */
 
 var _ = require('underscore');
 
@@ -9,10 +9,8 @@ describe('cloudwatch-metrics', function() {
   var restoreAWS;
 
   function attachHook(hook) {
-    restoreAWS = cloudwatchMetric.__set__('AWS', {
-      CloudWatch: function() {
-        this.putMetricData = hook;
-      }
+    restoreAWS = cloudwatchMetric.__set__('CloudWatch', function() {
+      this.putMetricData = hook;
     });
   }
 
@@ -136,6 +134,77 @@ describe('cloudwatch-metrics', function() {
       metric.put(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
       metric.put(2, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
     });
+
+    it('should set a Timestamp if specified in the options', function(done) {
+      attachHook(function(data, cb) {
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'metricName',
+            Unit: 'Count',
+            Timestamp: jasmine.any(String),
+            Value: 1
+          }],
+          Namespace: 'namespace'
+        });
+        expect(Date.parse(data.MetricData[0].Timestamp)).toBeLessThanOrEqual(Date.now());
+        cb();
+      });
+
+      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        withTimestamp: true,
+        sendInterval: 1000, // mocha defaults to a 2 second timeout so setting
+        // larger than that will cause the test to fail if we
+        // hit the timeout
+        sendCallback: done,
+      });
+
+      metric.put(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
+    });
+
+    it('should set a StorageResolution if specified in the options', function(done) {
+      attachHook(function(data, cb) {
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'metricName',
+            Unit: 'Count',
+            StorageResolution: 1,
+            Value: 1
+          }],
+          Namespace: 'namespace'
+        });
+        cb();
+      });
+
+      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        storageResolution: 1,
+        sendInterval: 1000, // mocha defaults to a 2 second timeout so setting
+        // larger than that will cause the test to fail if we
+        // hit the timeout
+        sendCallback: done,
+      });
+
+      metric.put(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
+    });
   });
 
   describe('sample', function() {
@@ -164,6 +233,155 @@ describe('cloudwatch-metrics', function() {
 
       metric.sample(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}], 0.2);
       expect(metric.put).toHaveBeenCalled();
+    });
+  });
+
+  describe('summaryPut', function() {
+    it('should not call with no data', function(done) {
+      attachHook(() => {
+        throw new Error('should not get send callback');
+      });
+
+      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD',
+      }], {
+        summaryInterval: 100,
+        sendCallback() {
+          throw new Error('should not get send callback');
+        },
+      });
+
+      spyOn(metric, '_summarizeMetrics');
+
+      setTimeout(() => {
+        expect(metric._summarizeMetrics).toHaveBeenCalled();
+        done();
+      }, 250);
+    });
+
+    it('should call with summary', function(done) {
+      let hookCalls = 0;
+      attachHook((data, cb) => {
+        ++hookCalls;
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'some-metric',
+            Unit: 'Count',
+            StatisticValues: {
+              Minimum: 12,
+              Maximum: 13,
+              Sum: 25,
+              SampleCount: 2,
+            },
+          }, {
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'some-other-metric',
+            Unit: 'Count',
+            StatisticValues: {
+              Minimum: 2,
+              Maximum: 2,
+              Sum: 2,
+              SampleCount: 1,
+            },
+          }],
+          Namespace: 'namespace'
+        });
+        cb();
+      });
+
+      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD',
+      }], {
+        summaryInterval: 100,
+        sendCallback() {
+          expect(hookCalls).toBe(1);
+          done();
+        },
+      });
+
+      metric.summaryPut(12, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+      metric.summaryPut(2, 'some-other-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+      setTimeout(() => {
+        metric.summaryPut(13, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+      }, 50);
+    });
+
+    it('should call after no data', function(done) {
+      let hookCalls = 0;
+      attachHook((data, cb) => {
+        ++hookCalls;
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'some-metric',
+            Unit: 'Count',
+            StatisticValues: {
+              Minimum: 12,
+              Maximum: 13,
+              Sum: 25,
+              SampleCount: 2,
+            },
+          }, {
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'some-other-metric',
+            Unit: 'Count',
+            StatisticValues: {
+              Minimum: 2,
+              Maximum: 2,
+              Sum: 2,
+              SampleCount: 1,
+            },
+          }],
+          Namespace: 'namespace'
+        });
+        cb();
+      });
+
+      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD',
+      }], {
+        summaryInterval: 200,
+        sendCallback() {
+          expect(hookCalls).toBe(1);
+          done();
+        },
+      });
+
+      setTimeout(() => {
+        metric.summaryPut(12, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+        metric.summaryPut(2, 'some-other-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+        setTimeout(() => {
+          metric.summaryPut(13, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+        }, 50);
+      }, 300);
     });
   });
 });

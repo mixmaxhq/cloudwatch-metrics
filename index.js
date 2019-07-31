@@ -79,7 +79,8 @@
  * ```
  */
 
-var AWS = require('aws-sdk');
+var CloudWatch = require('aws-sdk/clients/cloudwatch');
+const SummarySet = require('./src/summarySet');
 
 var _awsConfig = {region: 'us-east-1'};
 /**
@@ -95,12 +96,14 @@ function initialize(config) {
   _awsConfig = config;
 }
 
-
 const DEFAULT_METRIC_OPTIONS = {
   enabled: true,
   sendInterval: 5000,
+  summaryInterval: 10000,
   sendCallback: () => {},
-  maxCapacity: 20
+  maxCapacity: 20,
+  withTimestamp: false,
+  storageResolution: undefined
 };
 
 /**
@@ -121,17 +124,22 @@ const DEFAULT_METRIC_OPTIONS = {
  */
 function Metric(namespace, units, defaultDimensions, options) {
   var self = this;
-  self.cloudwatch = new AWS.CloudWatch(_awsConfig);
+  self.cloudwatch = new CloudWatch(_awsConfig);
   self.namespace = namespace;
   self.units = units;
   self.defaultDimensions = defaultDimensions || [];
   self.options = Object.assign({}, DEFAULT_METRIC_OPTIONS, options);
   self._storedMetrics = [];
+  this._summaryData = new Map();
 
   if (self.options.enabled) {
     self._interval = setInterval(() => {
       self._sendMetrics();
     }, self.options.sendInterval);
+
+    this._summaryInterval = setInterval(() => {
+      this._summarizeMetrics();
+    }, this.options.summaryInterval);
   }
 }
 
@@ -147,12 +155,20 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
   // Only publish if we are enabled
   if (self.options.enabled) {
     additionalDimensions = additionalDimensions || [];
-    self._storedMetrics.push({
+    var payload = {
       MetricName: metricName,
       Dimensions: self.defaultDimensions.concat(additionalDimensions),
       Unit: self.units,
       Value: value
-    });
+    };
+    if (this.options.withTimestamp) {
+      payload.Timestamp = new Date().toISOString();
+    }
+    if (this.options.storageResolution) {
+      payload.StorageResolution = this.options.storageResolution;
+    }
+
+    self._storedMetrics.push(payload);
 
     // We need to see if we're at our maxCapacity, if we are - then send the
     // metrics now.
@@ -164,6 +180,30 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
       }, self.options.sendInterval);
     }
   }
+};
+
+/**
+ * Summarize the data using a statistic set and put it on the configured summary interval. This will
+ * cause Cloudwatch to be unable to track the value distribution, so it'll only show summation and
+ * bounds. The order of additionalDimensions is important, and rearranging the order will cause the
+ * Metric instance to track those two summary sets independently!
+ * @param {Number} value The value to include in the summary.
+ * @param {String} metricName The name of the metric we're summarizing.
+ * @param {Object[]} additionalDimensions The extra dimensions we're tracking.
+ */
+Metric.prototype.summaryPut = function(value, metricName, additionalDimensions = []) {
+  const key = makeKey(metricName, additionalDimensions);
+  const entry = this._summaryData.get(key);
+
+  let set;
+  if (entry) {
+    set = entry[2];
+  } else {
+    set = new SummarySet();
+    const allDimensions = [...this.defaultDimensions, ...additionalDimensions];
+    this._summaryData.set(key, [metricName, allDimensions, set]);
+  }
+  set.put(value);
 };
 
 /**
@@ -219,6 +259,64 @@ Metric.prototype.shutdown = function() {
 Metric.prototype.hasMetrics = function() {
   return !!this._storedMetrics.length;
 };
+
+/**
+ * _summarizeMetrics is called on a specified interval (default, 10 seconds). It
+ * sends summarized statistics to Cloudwatch.
+ */
+Metric.prototype._summarizeMetrics = function() {
+  const summaryEntries = this._summaryData.values();
+  const dataPoints = [];
+  for (const [MetricName, Dimensions, set] of summaryEntries) {
+    if (!set.size) continue;
+
+    dataPoints.push({
+      MetricName,
+      Dimensions,
+      StatisticValues: set.get(),
+      Unit: this.units,
+    });
+
+    if (dataPoints.length === this.options.maxCapacity) {
+      // Put a copy of the points we've gathered, then empty the array so we can
+      // get more.
+      this._putSummaryMetrics(dataPoints.slice());
+      dataPoints.length = 0;
+    }
+  }
+
+  if (dataPoints.length) {
+    this._putSummaryMetrics(dataPoints);
+  }
+};
+
+/**
+ * Put a single batch of summarized metrics to Cloudwatch. This helps avoid
+ * hitting the Cloudwatch per-call maximum.
+ */
+Metric.prototype._putSummaryMetrics = function(MetricData) {
+  this.cloudwatch.putMetricData({
+    MetricData,
+    Namespace: this.namespace,
+  }, this.options.sendCallback);
+};
+
+/**
+ * Make a key for a given metric name and some dimensions. This works on the
+ * assumption that sane people won't put a null character in their metric name
+ * or dimension name/value.
+ *
+ * @param {String} metricName
+ * @param {Object[]} dimensions
+ * @returns {String} Something we can actually use as a Map key.
+ */
+function makeKey(metricName, dimensions) {
+  let key = metricName;
+  for (const {Name, Value} of dimensions) {
+    key += `\0${Name}\0${Value}`;
+  }
+  return key;
+}
 
 module.exports = {
   initialize,

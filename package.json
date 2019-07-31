@@ -1,6 +1,6 @@
 {
   "name": "cloudwatch-metrics",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A simple wrapper for simplifying using Cloudwatch metrics",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/mixmaxhq/cloudwatch-metrics#readme",
   "dependencies": {
-    "aws-sdk": "^2.4.14"
+    "aws-sdk": "^2.412.0"
   },
   "devDependencies": {
     "eslint": ">=3",
