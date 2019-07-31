@@ -212,7 +212,9 @@ Metric.prototype.shutdown = function() {
 };
 
 /**
- * Gets whether outstanding metrics exist or not
+ * Gets whether outstanding metrics exist or not.
+ *
+ * @return {boolean}
  */
 Metric.prototype.hasMetrics = function() {
   return !!this._storedMetrics.length;
