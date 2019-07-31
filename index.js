@@ -102,7 +102,8 @@ const DEFAULT_METRIC_OPTIONS = {
   summaryInterval: 10000,
   sendCallback: () => {},
   maxCapacity: 20,
-  withTimestamp: false
+  withTimestamp: false,
+  storageResolution: undefined
 };
 
 /**
@@ -162,6 +163,9 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
     };
     if (this.options.withTimestamp) {
       payload.Timestamp = new Date().toISOString();
+    }
+    if (this.options.storageResolution) {
+      payload.StorageResolution = this.options.storageResolution;
     }
 
     self._storedMetrics.push(payload);

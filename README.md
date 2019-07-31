@@ -67,6 +67,8 @@ enabled | Whether or not we should send the metric to CloudWatch (useful for dev
 sendInterval | The interval in milliseconds at which we send any buffered metrics, defaults to 5000 milliseconds.
 sendCallback | A callback to be called when we send metric data to CloudWatch (useful for logging any errors in sending data).
 maxCapacity | A maximum number of events to buffer before we send immediately (before the sendInterval is reached).
+withTimestamp | Include the timestamp with the metric value.
+storageResolution | The metric storage resolution to use in seconds. Set to 1 for high resolution metrics. See (https://aws.amazon.com/blogs/aws/new-high-resolution-custom-metrics-and-alarms-for-amazon-cloudwatch/)
 
 ### Publishing metric data
 Then, whenever we want to publish a metric, we simply do:
