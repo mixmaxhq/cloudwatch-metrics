@@ -1,4 +1,4 @@
-/* globals describe, afterEach, it, expect, spyOn */
+/* globals describe, afterEach, it, expect, spyOn, jasmine */
 
 const _ = require('underscore');
 
@@ -9,10 +9,8 @@ describe('cloudwatch-metrics', () => {
   let restoreAWS;
 
   function attachHook(hook) {
-    restoreAWS = cloudwatchMetric.__set__('AWS', {
-      CloudWatch: function() {
-        this.putMetricData = hook;
-      }
+    restoreAWS = cloudwatchMetric.__set__('CloudWatch', function() {
+      this.putMetricData = hook;
     });
   }
 
@@ -167,6 +165,77 @@ describe('cloudwatch-metrics', () => {
       });
 
       putMetric(metric, 2);
+    });
+
+    it('should set a Timestamp if specified in the options', function(done) {
+      attachHook(function(data, cb) {
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'metricName',
+            Unit: 'Count',
+            Timestamp: jasmine.any(String),
+            Value: 1
+          }],
+          Namespace: 'namespace'
+        });
+        expect(Date.parse(data.MetricData[0].Timestamp)).toBeLessThanOrEqual(Date.now());
+        cb();
+      });
+
+      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        withTimestamp: true,
+        sendInterval: 1000, // mocha defaults to a 2 second timeout so setting
+        // larger than that will cause the test to fail if we
+        // hit the timeout
+        sendCallback: done,
+      });
+
+      metric.put(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
+    });
+
+    it('should set a StorageResolution if specified in the options', function(done) {
+      attachHook(function(data, cb) {
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'metricName',
+            Unit: 'Count',
+            StorageResolution: 1,
+            Value: 1
+          }],
+          Namespace: 'namespace'
+        });
+        cb();
+      });
+
+      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        storageResolution: 1,
+        sendInterval: 1000, // mocha defaults to a 2 second timeout so setting
+        // larger than that will cause the test to fail if we
+        // hit the timeout
+        sendCallback: done,
+      });
+
+      metric.put(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
     });
   });
 

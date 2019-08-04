@@ -79,7 +79,7 @@
  * ```
  */
 
-let AWS = require('aws-sdk');
+let CloudWatch = require('aws-sdk/clients/cloudwatch');
 const SummarySet = require('./src/summarySet');
 
 let _awsConfig = {region: 'us-east-1'};
@@ -96,13 +96,14 @@ function initialize(config) {
   _awsConfig = config;
 }
 
-
 const DEFAULT_METRIC_OPTIONS = {
   enabled: true,
   sendInterval: 5000,
   summaryInterval: 10000,
   sendCallback: () => {},
-  maxCapacity: 20
+  maxCapacity: 20,
+  withTimestamp: false,
+  storageResolution: undefined
 };
 
 /**
@@ -122,7 +123,7 @@ const DEFAULT_METRIC_OPTIONS = {
  *      turning off metrics in specific environments.
  */
 function Metric(namespace, units, defaultDimensions, options) {
-  this.cloudwatch = new AWS.CloudWatch(_awsConfig);
+  this.cloudwatch = new CloudWatch(_awsConfig);
   this.namespace = namespace;
   this.units = units;
   this.defaultDimensions = defaultDimensions || [];
@@ -145,7 +146,7 @@ function Metric(namespace, units, defaultDimensions, options) {
 /**
  * Publish this data to Cloudwatch
  * @param {Integer|Long} value          Data point to submit
- * @param {String} namespace            Name of the metric
+ * @param {String} metricName           Name of the metric
  * @param {Array} additionalDimensions  Array of additional CloudWatch metric dimensions. See
  * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
  */
@@ -153,12 +154,20 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
   // Only publish if we are enabled
   if (this.options.enabled) {
     additionalDimensions = additionalDimensions || [];
-    this._storedMetrics.push({
+    let payload = {
       MetricName: metricName,
       Dimensions: this.defaultDimensions.concat(additionalDimensions),
       Unit: this.units,
       Value: value
-    });
+    };
+    if (this.options.withTimestamp) {
+      payload.Timestamp = new Date().toISOString();
+    }
+    if (this.options.storageResolution) {
+      payload.StorageResolution = this.options.storageResolution;
+    }
+
+    this._storedMetrics.push(payload);
 
     // We need to see if we're at our maxCapacity, if we are - then send the
     // metrics now.
@@ -200,7 +209,7 @@ Metric.prototype.summaryPut = function(value, metricName, additionalDimensions =
  * Samples a metric so that we send the metric to Cloudwatch at the given
  * sampleRate.
  * @param {Integer|Long} value          Data point to submit
- * @param {String} namespace            Name of the metric
+ * @param {String} metricName            Name of the metric
  * @param {Array} additionalDimensions  Array of additional CloudWatch metric dimensions. See
  * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
  * @param  {Float} sampleRate           The rate at which to sample the metric at.
@@ -230,6 +239,23 @@ Metric.prototype._sendMetrics = function() {
     MetricData: dataPoints,
     Namespace: this.namespace
   }, this.options.sendCallback);
+};
+
+/**
+ * Shuts down metric service by clearing any outstanding timer and sending any existing metrics
+ */
+Metric.prototype.shutdown = function() {
+  clearInterval(this._interval);
+  this._sendMetrics();
+};
+
+/**
+ * Gets whether outstanding metrics exist or not.
+ *
+ * @return {boolean}
+ */
+Metric.prototype.hasMetrics = function() {
+  return !!this._storedMetrics.length;
 };
 
 /**
