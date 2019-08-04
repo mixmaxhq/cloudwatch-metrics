@@ -246,7 +246,9 @@ Metric.prototype._sendMetrics = function() {
  */
 Metric.prototype.shutdown = function() {
   clearInterval(this._interval);
+  clearInterval(this._summaryInterval);
   this._sendMetrics();
+  this._summarizeMetrics();
 };
 
 /**
