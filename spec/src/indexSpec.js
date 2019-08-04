@@ -37,7 +37,7 @@ describe('cloudwatch-metrics', () => {
 
   function putMetric(metric, amount) {
     for (let i = 1; i <= amount; i++) {
-      metric.put(i, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}]);
+      metric.put(i, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
     }
   }
 
@@ -189,7 +189,7 @@ describe('cloudwatch-metrics', () => {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -224,7 +224,7 @@ describe('cloudwatch-metrics', () => {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -249,7 +249,7 @@ describe('cloudwatch-metrics', () => {
       spyOn(Math, 'random').and.returnValue(0.5);
       spyOn(metric, 'put');
 
-      metric.sample(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}], 0.2);
+      metric.sample(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}], 0.2);
       expect(metric.put).not.toHaveBeenCalled();
     });
 
@@ -263,7 +263,7 @@ describe('cloudwatch-metrics', () => {
       // Just so we don't send anything to AWS.
       spyOn(metric, 'put').and.returnValue(undefined);
 
-      metric.sample(1, 'metricName', [{Name:'ExtraDimension',Value: 'Value'}], 0.2);
+      metric.sample(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}], 0.2);
       expect(metric.put).toHaveBeenCalled();
     });
   });

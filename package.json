@@ -4,8 +4,8 @@
   "description": "A simple wrapper for simplifying using Cloudwatch metrics",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/jasmine",
-    "lint": "./node_modules/.bin/eslint ."
+    "test": "jasmine",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",

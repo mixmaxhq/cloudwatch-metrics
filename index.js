@@ -3,7 +3,7 @@
  * CloudWatch metrics. We should always initialize our environment first:
  *
  * ```
- * var cloudwatchMetrics = require('cloudwatch-metrics');
+ * const cloudwatchMetrics = require('cloudwatch-metrics');
  * cloudwatchMetrics.initialize({
  * 	region: 'us-east-1'
  * });
@@ -13,14 +13,14 @@
  * namespace and the type of metric:
  *
  * ```
- * 	var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
+ * 	const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
  * ```
  *
  * If we want to add our own default dimensions, such as environment information,
  * we can add it in the following manner:
  *
  * ```
- * var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+ * const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
  * 	Name: 'environment',
  * 	Value: 'PROD'
  * }]);
@@ -31,9 +31,9 @@
  *
  * ```
  * // isLocal is a boolean
- * var isLocal = someWayOfDetermingIfLocal();
+ * const isLocal = someWayOfDetermingIfLocal();
  *
- * var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+ * const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
  * 	Name: 'environment',
  * 	Value: 'PROD'
  * }], {
@@ -56,7 +56,7 @@
  * CloudWatch Metric:
  *
  * ```
- * var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+ * const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
  * 	Name: 'environment',
  * 	Value: 'PROD'
  * }], {
@@ -67,7 +67,7 @@
  * You can also register a callback to be called when we actually send metrics
  * to CloudWatch - this can be useful for logging put-metric-data errors:
  * ```
- * var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
+ * const myMetric = new cloudwatchMetrics.Metric('namespace', 'Count', [{
  * 	Name: 'environment',
  * 	Value: 'PROD'
  * }], {
