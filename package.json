@@ -4,6 +4,7 @@
   "description": "A simple wrapper for simplifying using Cloudwatch metrics",
   "main": "index.js",
   "scripts": {
+    "ci": "npm run lint && npm test",
     "test": "jasmine",
     "lint": "eslint ."
   },
