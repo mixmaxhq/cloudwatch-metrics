@@ -388,4 +388,45 @@ describe('cloudwatch-metrics', function() {
       }, 300);
     });
   });
+
+  describe('shutdown', function () {
+    let setIntervalSpy, clearIntervalSpy;
+
+    beforeEach(function () {
+      setIntervalSpy = jasmine.createSpy('setInterval');
+      clearIntervalSpy = jasmine.createSpy('clearInterval');
+      spyOn(global, 'setInterval').and.callFake(setIntervalSpy);
+      spyOn(global, 'clearInterval').and.callFake(clearIntervalSpy);
+    });
+
+    afterEach(function () {
+      setIntervalSpy.calls.reset();
+      clearIntervalSpy.calls.reset();
+    });
+
+    it('clears all timers and sends remaining metrics', function() {
+      const sent = jasmine.createSpy('sent');
+      attachHook(sent);
+      const scopedMetric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        sendInterval: 1000,
+        summaryInterval: 1000,
+        enabled: true
+      });
+
+      expect(setIntervalSpy).toHaveBeenCalledTimes(2);
+
+      scopedMetric.put(1, 'metricName', [{ Name:'ExtraDimension', Value: 'Value'}]);
+      scopedMetric.summaryPut(10, 'summaryMetric', [{ Name: 'ExtraDimension', Value: 'Value'}]);
+
+      expect(sent).not.toHaveBeenCalled();
+
+      scopedMetric.shutdown();
+
+      expect(sent).toHaveBeenCalledTimes(2);
+      expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
+    });
+  });
 });
