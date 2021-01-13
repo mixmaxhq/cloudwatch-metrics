@@ -153,9 +153,11 @@ function Metric(namespace, units, defaultDimensions, options) {
  */
 Metric.prototype.put = function(...args) {
   if (args.length === 3) {
-    const units = Array.isArray(args[2]) ? this.units : args[2];
-    const additionalDimensions = Array.isArray(args[2]) ? args[2] : [];
-    return this._put(args[0], args[1], units, additionalDimensions);
+    const [value, metricName] = args;
+    const shouldInheritUnits = Array.isArray(args[2]);
+    const units = shouldInheritUnits ? this.units : args[2];
+    const additionalDimensions = shouldInheritUnits ? args[2] : [];
+    return this._put(value, metricName, units, additionalDimensions);
   } else if (args.length === 2) {
     return this._put(...args, this.units);
   }
@@ -206,8 +208,9 @@ Metric.prototype._put = function(value, metricName, units, additionalDimensions)
 Metric.prototype.summaryPut = function(...args) {
   if (args.length === 3) {
     const [value, metricName] = args;
-    const units = Array.isArray(args[2]) ? this.units : args[2];
-    const additionalDimensions = Array.isArray(args[2]) ? args[2] : [];
+    const shouldInheritUnits = Array.isArray(args[2]);
+    const units = shouldInheritUnits ? this.units : args[2];
+    const additionalDimensions = shouldInheritUnits ? args[2] : [];
     return this._summaryPut(value, metricName, units, additionalDimensions);
   } else if (args.length === 2) {
     return this._summaryPut(...args, this.units, []);
