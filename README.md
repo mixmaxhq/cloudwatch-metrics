@@ -29,7 +29,7 @@ cloudwatchMetrics.initialize({
 
 ### Metric creation
 For creating a metric, we simply need to provide the
-namespace and the type of metric:
+namespace and the default type of metric:
 ```js
 var myMetric = new cloudwatchMetrics.Metric('namespace', 'Count');
 ```
@@ -73,7 +73,7 @@ storageResolution | The metric storage resolution to use in seconds. Set to 1 fo
 ### Publishing metric data
 Then, whenever we want to publish a metric, we simply do:
 ```js
-myMetric.put(value, metric, additionalDimensions);
+myMetric.put(value, metric, units, additionalDimensions);
 ```
 
 ### Using summary metrics

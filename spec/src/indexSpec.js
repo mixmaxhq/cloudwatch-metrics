@@ -205,6 +205,37 @@ describe('cloudwatch-metrics', function() {
 
       metric.put(1, 'metricName', [{Name: 'ExtraDimension', Value: 'Value'}]);
     });
+
+    it('should override the Unit from the namespace if specified in the put call', function (done) {
+      attachHook(function (data, cb) {
+        expect(data).toEqual({
+          MetricData: [{
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'metricName',
+            Unit: 'Percent',
+            Value: 1
+          }],
+          Namespace: 'namespace'
+        });
+        cb();
+      });
+
+      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        sendInterval: 1000,
+        sendCallback: done,
+      });
+
+      metric.put(1, 'metricName', 'Percent', [{ Name: 'ExtraDimension', Value: 'Value' }]);
+    });
   });
 
   describe('sample', function() {
@@ -297,6 +328,22 @@ describe('cloudwatch-metrics', function() {
               Sum: 2,
               SampleCount: 1,
             },
+          }, {
+            Dimensions: [{
+              Name: 'environment',
+              Value: 'PROD'
+            }, {
+              Name: 'ExtraDimension',
+              Value: 'Value'
+            }],
+            MetricName: 'a-metric-with-different-unit',
+            Unit: 'Percent',
+            StatisticValues: {
+              Minimum: 5,
+              Maximum: 5,
+              Sum: 5,
+              SampleCount: 1,
+            },
           }],
           Namespace: 'namespace'
         });
@@ -314,8 +361,9 @@ describe('cloudwatch-metrics', function() {
         },
       });
 
-      metric.summaryPut(12, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
-      metric.summaryPut(2, 'some-other-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
+      metric.summaryPut(12, 'some-metric', [{ Name: 'ExtraDimension', Value: 'Value' }]);
+      metric.summaryPut(2, 'some-other-metric', [{ Name: 'ExtraDimension', Value: 'Value' }]);
+      metric.summaryPut(5, 'a-metric-with-different-unit', 'Percent', [{ Name: 'ExtraDimension', Value: 'Value' }]);
       setTimeout(() => {
         metric.summaryPut(13, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
       }, 50);

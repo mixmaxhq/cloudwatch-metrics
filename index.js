@@ -147,18 +147,31 @@ function Metric(namespace, units, defaultDimensions, options) {
  * Publish this data to Cloudwatch
  * @param {Integer|Long} value          Data point to submit
  * @param {String} namespace            Name of the metric
- * @param {Array} additionalDimensions  Array of additional CloudWatch metric dimensions. See
+ * @param {String} units                CloudWatch units
+ * @param {Array} [additionalDimensions]  Array of additional CloudWatch metric dimensions. See
  * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
  */
-Metric.prototype.put = function(value, metricName, additionalDimensions) {
+Metric.prototype.put = function(...args) {
+  if (args.length === 3) {
+    const [value, metricName] = args;
+    const shouldInheritUnits = Array.isArray(args[2]);
+    const units = shouldInheritUnits ? this.units : args[2];
+    const additionalDimensions = shouldInheritUnits ? args[2] : [];
+    return this._put(value, metricName, units, additionalDimensions);
+  } else if (args.length === 2) {
+    return this._put(...args, this.units);
+  }
+  return this._put(...args);
+};
+
+Metric.prototype._put = function(value, metricName, units, additionalDimensions) {
   var self = this;
   // Only publish if we are enabled
   if (self.options.enabled) {
-    additionalDimensions = additionalDimensions || [];
     var payload = {
       MetricName: metricName,
       Dimensions: self.defaultDimensions.concat(additionalDimensions),
-      Unit: self.units,
+      Unit: units,
       Value: value
     };
     if (this.options.withTimestamp) {
@@ -189,19 +202,33 @@ Metric.prototype.put = function(value, metricName, additionalDimensions) {
  * Metric instance to track those two summary sets independently!
  * @param {Number} value The value to include in the summary.
  * @param {String} metricName The name of the metric we're summarizing.
+ * @param {String} units CloudWatch units
  * @param {Object[]} additionalDimensions The extra dimensions we're tracking.
  */
-Metric.prototype.summaryPut = function(value, metricName, additionalDimensions = []) {
-  const key = makeKey(metricName, additionalDimensions);
+Metric.prototype.summaryPut = function(...args) {
+  if (args.length === 3) {
+    const [value, metricName] = args;
+    const shouldInheritUnits = Array.isArray(args[2]);
+    const units = shouldInheritUnits ? this.units : args[2];
+    const additionalDimensions = shouldInheritUnits ? args[2] : [];
+    return this._summaryPut(value, metricName, units, additionalDimensions);
+  } else if (args.length === 2) {
+    return this._summaryPut(...args, this.units, []);
+  }
+  return this._summaryPut(...args);
+};
+
+Metric.prototype._summaryPut = function(value, metricName, units, additionalDimensions = []) {
+  const key = makeKey(metricName, units, additionalDimensions);
   const entry = this._summaryData.get(key);
 
   let set;
   if (entry) {
-    set = entry[2];
+    set = entry[3];
   } else {
     set = new SummarySet();
     const allDimensions = [...this.defaultDimensions, ...additionalDimensions];
-    this._summaryData.set(key, [metricName, allDimensions, set]);
+    this._summaryData.set(key, [metricName, units, allDimensions, set]);
   }
   set.put(value);
 };
@@ -211,6 +238,7 @@ Metric.prototype.summaryPut = function(value, metricName, additionalDimensions =
  * sampleRate.
  * @param {Integer|Long} value          Data point to submit
  * @param {String} namespace            Name of the metric
+ * @param {String} units                CloudWatch units
  * @param {Array} additionalDimensions  Array of additional CloudWatch metric dimensions. See
  * http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Dimension.html for details.
  * @param  {Float} sampleRate           The rate at which to sample the metric at.
@@ -218,8 +246,19 @@ Metric.prototype.summaryPut = function(value, metricName, additionalDimensions =
  *    a sampleRate of 0.1, then we will send the metric to Cloudwatch 10% of the
  *    time.
  */
-Metric.prototype.sample = function(value, metricName, additionalDimensions, sampleRate) {
-  if (Math.random() < sampleRate) this.put(value, metricName, additionalDimensions);
+Metric.prototype.sample = function(...args) {
+  if (args.length === 4) {
+    const [value, metricName, additionalDimensions, sampleRate] = args;
+    const units = this.units;
+    return this._sample(value, metricName, units, additionalDimensions, sampleRate);
+  }
+
+  return this.prototype._sample(...args);
+};
+
+Metric.prototype._sample = function(value, metricName, units, additionalDimensions, sampleRate) {
+  sampleRate = Array.isArray(additionalDimensions) ? sampleRate : additionalDimensions;
+  if (Math.random() < sampleRate) this.put(value, metricName, units, additionalDimensions);
 };
 
 /**
@@ -267,14 +306,14 @@ Metric.prototype.hasMetrics = function() {
 Metric.prototype._summarizeMetrics = function() {
   const summaryEntries = this._summaryData.values();
   const dataPoints = [];
-  for (const [MetricName, Dimensions, set] of summaryEntries) {
+  for (const [MetricName, Unit, Dimensions, set] of summaryEntries) {
     if (!set.size) continue;
 
     dataPoints.push({
       MetricName,
       Dimensions,
       StatisticValues: set.get(),
-      Unit: this.units,
+      Unit,
     });
 
     if (dataPoints.length === this.options.maxCapacity) {
@@ -307,11 +346,12 @@ Metric.prototype._putSummaryMetrics = function(MetricData) {
  * or dimension name/value.
  *
  * @param {String} metricName
+ * @param {String} units
  * @param {Object[]} dimensions
  * @returns {String} Something we can actually use as a Map key.
  */
-function makeKey(metricName, dimensions) {
-  let key = metricName;
+function makeKey(metricName, units, dimensions) {
+  let key = `${metricName}\0${units}`;
   for (const {Name, Value} of dimensions) {
     key += `\0${Name}\0${Value}`;
   }
