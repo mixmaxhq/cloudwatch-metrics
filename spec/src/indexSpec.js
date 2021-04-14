@@ -1,4 +1,4 @@
-/* globals describe, afterEach, it, expect, spyOn, jasmine */
+/* globals describe, beforeEach, afterEach, it, expect, spyOn, jasmine */
 
 var _ = require('underscore');
 
@@ -6,7 +6,7 @@ var rewire = require('rewire');
 var cloudwatchMetric = rewire('../..');
 
 describe('cloudwatch-metrics', function() {
-  var restoreAWS;
+  var restoreAWS, metric;
 
   function attachHook(hook) {
     restoreAWS = cloudwatchMetric.__set__('CloudWatch', function() {
@@ -18,6 +18,10 @@ describe('cloudwatch-metrics', function() {
     if (restoreAWS) {
       restoreAWS();
       restoreAWS = null;
+    }
+
+    if (metric) {
+      metric.shutdown();
     }
   });
 
@@ -42,7 +46,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -73,7 +77,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -120,7 +124,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -157,7 +161,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -192,7 +196,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }], {
@@ -240,7 +244,7 @@ describe('cloudwatch-metrics', function() {
 
   describe('sample', function() {
     it('should ignore metrics when not in the sample range', function() {
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }]);
@@ -253,7 +257,7 @@ describe('cloudwatch-metrics', function() {
     });
 
     it('should call put when the we decide to sample a metric', function() {
-      var metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD'
       }]);
@@ -273,7 +277,7 @@ describe('cloudwatch-metrics', function() {
         throw new Error('should not get send callback');
       });
 
-      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD',
       }], {
@@ -350,7 +354,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD',
       }], {
@@ -412,7 +416,7 @@ describe('cloudwatch-metrics', function() {
         cb();
       });
 
-      const metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+      metric = new cloudwatchMetric.Metric('namespace', 'Count', [{
         Name: 'environment',
         Value: 'PROD',
       }], {
@@ -430,6 +434,47 @@ describe('cloudwatch-metrics', function() {
           metric.summaryPut(13, 'some-metric', [{Name: 'ExtraDimension', Value: 'Value'}]);
         }, 50);
       }, 300);
+    });
+  });
+
+  describe('shutdown', function () {
+    let setIntervalSpy, clearIntervalSpy;
+
+    beforeEach(function () {
+      setIntervalSpy = jasmine.createSpy('setInterval');
+      clearIntervalSpy = jasmine.createSpy('clearInterval');
+      spyOn(global, 'setInterval').and.callFake(setIntervalSpy);
+      spyOn(global, 'clearInterval').and.callFake(clearIntervalSpy);
+    });
+
+    afterEach(function () {
+      setIntervalSpy.calls.reset();
+      clearIntervalSpy.calls.reset();
+    });
+
+    it('clears all timers and sends remaining metrics', function() {
+      const sent = jasmine.createSpy('sent');
+      attachHook(sent);
+      const scopedMetric = new cloudwatchMetric.Metric('namespace', 'Count', [{
+        Name: 'environment',
+        Value: 'PROD'
+      }], {
+        sendInterval: 1000,
+        summaryInterval: 1000,
+        enabled: true
+      });
+
+      expect(setIntervalSpy).toHaveBeenCalledTimes(2);
+
+      scopedMetric.put(1, 'metricName', [{ Name:'ExtraDimension', Value: 'Value'}]);
+      scopedMetric.summaryPut(10, 'summaryMetric', [{ Name: 'ExtraDimension', Value: 'Value'}]);
+
+      expect(sent).not.toHaveBeenCalled();
+
+      scopedMetric.shutdown();
+
+      expect(sent).toHaveBeenCalledTimes(2);
+      expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

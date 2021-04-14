@@ -133,11 +133,11 @@ function Metric(namespace, units, defaultDimensions, options) {
   this._summaryData = new Map();
 
   if (self.options.enabled) {
-    self._interval = setInterval(() => {
+    self._interval = global.setInterval(() => {
       self._sendMetrics();
     }, self.options.sendInterval);
 
-    this._summaryInterval = setInterval(() => {
+    this._summaryInterval = global.setInterval(() => {
       this._summarizeMetrics();
     }, this.options.summaryInterval);
   }
@@ -186,9 +186,9 @@ Metric.prototype._put = function(value, metricName, units, additionalDimensions)
     // We need to see if we're at our maxCapacity, if we are - then send the
     // metrics now.
     if (self._storedMetrics.length === self.options.maxCapacity) {
-      clearInterval(self._interval);
+      global.clearInterval(self._interval);
       self._sendMetrics();
-      self._interval = setInterval(() => {
+      self._interval = global.setInterval(() => {
         self._sendMetrics();
       }, self.options.sendInterval);
     }
@@ -286,8 +286,11 @@ Metric.prototype._sendMetrics = function() {
  * Shuts down metric service by clearing any outstanding timer and sending any existing metrics
  */
 Metric.prototype.shutdown = function() {
-  clearInterval(this._interval);
+  global.clearInterval(this._interval);
+  global.clearInterval(this._summaryInterval);
+
   this._sendMetrics();
+  this._summarizeMetrics();
 };
 
 /**
