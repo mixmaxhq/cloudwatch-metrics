@@ -79,7 +79,7 @@
  * ```
  */
 
-var CloudWatch = require('aws-sdk/clients/cloudwatch');
+var { CloudWatchClient, PutMetricDataCommand }= require('@aws-sdk/client-cloudwatch');
 const SummarySet = require('./src/summarySet');
 
 var _awsConfig = {region: 'us-east-1'};
@@ -109,8 +109,8 @@ const DEFAULT_METRIC_OPTIONS = {
 /**
  * Create a custom CloudWatch Metric object that sets pre-configured dimensions and allows for
  * customized metricName and units. Each CloudWatchMetric object has it's own internal
- * AWS.CloudWatch object to prevent errors due to overlapping callings to
- * AWS.CloudWatch#putMetricData.
+ * CloudWatchClient object to prevent errors due to overlapping callings to
+ * CloudWatchClient#send.
  *
  * @param {String} namespace         CloudWatch namespace
  * @param {String} units             CloudWatch units
@@ -124,7 +124,7 @@ const DEFAULT_METRIC_OPTIONS = {
  */
 function Metric(namespace, units, defaultDimensions, options) {
   var self = this;
-  self.cloudwatch = new CloudWatch(_awsConfig);
+  self.cloudwatch = new CloudWatchClient(_awsConfig);
   self.namespace = namespace;
   self.units = units;
   self.defaultDimensions = defaultDimensions || [];
@@ -275,11 +275,10 @@ Metric.prototype._sendMetrics = function() {
   self._storedMetrics = [];
 
   if (!dataPoints || !dataPoints.length) return;
-
-  self.cloudwatch.putMetricData({
+  self.cloudwatch.send(new PutMetricDataCommand({
     MetricData: dataPoints,
     Namespace: self.namespace
-  }, self.options.sendCallback);
+  }), self.options.sendCallback);
 };
 
 /**
@@ -337,10 +336,10 @@ Metric.prototype._summarizeMetrics = function() {
  * hitting the Cloudwatch per-call maximum.
  */
 Metric.prototype._putSummaryMetrics = function(MetricData) {
-  this.cloudwatch.putMetricData({
+  this.cloudwatch.send(new PutMetricDataCommand({
     MetricData,
     Namespace: this.namespace,
-  }, this.options.sendCallback);
+  }), this.options.sendCallback);
 };
 
 /**

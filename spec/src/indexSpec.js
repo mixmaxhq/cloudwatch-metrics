@@ -9,8 +9,8 @@ describe('cloudwatch-metrics', function() {
   var restoreAWS, metric;
 
   function attachHook(hook) {
-    restoreAWS = cloudwatchMetric.__set__('CloudWatch', function() {
-      this.putMetricData = hook;
+    restoreAWS = cloudwatchMetric.__set__('CloudWatchClient', function() {
+      this.send = hook;
     });
   }
 
@@ -28,7 +28,7 @@ describe('cloudwatch-metrics', function() {
   describe('put', function() {
     it('should buffer until timeout', function(done) {
       attachHook(function(data, cb) {
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -42,7 +42,7 @@ describe('cloudwatch-metrics', function() {
             Value: 1
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 
@@ -59,7 +59,7 @@ describe('cloudwatch-metrics', function() {
 
     it('should call continually', function(done) {
       attachHook(function(data, cb) {
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -73,7 +73,7 @@ describe('cloudwatch-metrics', function() {
             Value: 1
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 
@@ -95,7 +95,7 @@ describe('cloudwatch-metrics', function() {
 
     it('should buffer until the cap is hit', function(done) {
       attachHook(function(data, cb) {
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -120,7 +120,7 @@ describe('cloudwatch-metrics', function() {
             Value: 2
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 
@@ -141,7 +141,7 @@ describe('cloudwatch-metrics', function() {
 
     it('should set a Timestamp if specified in the options', function(done) {
       attachHook(function(data, cb) {
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -156,8 +156,8 @@ describe('cloudwatch-metrics', function() {
             Value: 1
           }],
           Namespace: 'namespace'
-        });
-        expect(Date.parse(data.MetricData[0].Timestamp)).toBeLessThanOrEqual(Date.now());
+        }}));
+        expect(Date.parse(data.input.MetricData[0].Timestamp)).toBeLessThanOrEqual(Date.now());
         cb();
       });
 
@@ -177,7 +177,7 @@ describe('cloudwatch-metrics', function() {
 
     it('should set a StorageResolution if specified in the options', function(done) {
       attachHook(function(data, cb) {
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -192,7 +192,7 @@ describe('cloudwatch-metrics', function() {
             Value: 1
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 
@@ -212,7 +212,7 @@ describe('cloudwatch-metrics', function() {
 
     it('should override the Unit from the namespace if specified in the put call', function (done) {
       attachHook(function (data, cb) {
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -226,7 +226,7 @@ describe('cloudwatch-metrics', function() {
             Value: 1
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 
@@ -299,7 +299,7 @@ describe('cloudwatch-metrics', function() {
       let hookCalls = 0;
       attachHook((data, cb) => {
         ++hookCalls;
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -350,7 +350,7 @@ describe('cloudwatch-metrics', function() {
             },
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 
@@ -377,7 +377,7 @@ describe('cloudwatch-metrics', function() {
       let hookCalls = 0;
       attachHook((data, cb) => {
         ++hookCalls;
-        expect(data).toEqual({
+        expect(data).toEqual(jasmine.objectContaining({input: {
           MetricData: [{
             Dimensions: [{
               Name: 'environment',
@@ -412,7 +412,7 @@ describe('cloudwatch-metrics', function() {
             },
           }],
           Namespace: 'namespace'
-        });
+        }}));
         cb();
       });
 

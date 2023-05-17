@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/mixmaxhq/cloudwatch-metrics#readme",
   "dependencies": {
-    "aws-sdk": "^2.412.0"
+    "@aws-sdk/client-cloudwatch": "^3.332.0"
   },
   "devDependencies": {
     "eslint": ">=3",
