@@ -164,7 +164,7 @@ Metric.prototype.put = function(...args) {
   return this._put(...args);
 };
 
-Metric.prototype._put = function(value, metricName, units, additionalDimensions) {
+Metric.prototype._put = function(value, metricName, units, additionalDimensions = []) {
   var self = this;
   // Only publish if we are enabled
   if (self.options.enabled) {
