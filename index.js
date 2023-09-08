@@ -175,7 +175,7 @@ Metric.prototype._put = function(value, metricName, units, additionalDimensions 
       Value: value
     };
     if (this.options.withTimestamp) {
-      payload.Timestamp = new Date().toISOString();
+      payload.Timestamp = new Date();
     }
     if (this.options.storageResolution) {
       payload.StorageResolution = this.options.storageResolution;
