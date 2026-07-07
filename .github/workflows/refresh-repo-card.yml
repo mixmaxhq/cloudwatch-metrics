@@ -1,0 +1,31 @@
+name: refresh-repo-card
+
+# Keeps this repo's CLAUDE.md card current (MIX-181). Delegates all logic to the shared reusable
+# workflow in mixmaxhq/github-workflows. Runs nightly + on manual dispatch. No CODEOWNERS needed —
+# the card PR is assigned to the authors of the changes that made it stale.
+on:
+  schedule: [{ cron: "0 6 * * 1-5" }]   # 06:00 UTC, weekdays
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "incremental = diff since the last run; full = re-derive the card from scratch."
+        type: choice
+        options: [incremental, full]
+        default: incremental
+      base-window-hours:
+        description: Fallback window for the first incremental run (widen to force a run during testing).
+        type: number
+        default: 24
+
+jobs:
+  card:
+    uses: mixmaxhq/github-workflows/.github/workflows/refresh_repo_card.yml@main
+    with:
+      # inputs is empty on scheduled runs, so `||` supplies the default there.
+      mode: ${{ inputs.mode || 'incremental' }}
+      base-window-hours: ${{ inputs.base-window-hours || 24 }}
+    # Pass only the secrets the reusable workflow declares, not `inherit` (least privilege).
+    secrets:
+      REPO_CARD_UPDATER_OPENAI_API_KEY: ${{ secrets.REPO_CARD_UPDATER_OPENAI_API_KEY }}
+      REPO_CARD_UPDATER_APP_ID: ${{ secrets.REPO_CARD_UPDATER_APP_ID }}
+      REPO_CARD_UPDATER_PRIVATE_KEY: ${{ secrets.REPO_CARD_UPDATER_PRIVATE_KEY }}
